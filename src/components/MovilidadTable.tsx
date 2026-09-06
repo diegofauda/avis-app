@@ -116,7 +116,7 @@ function Fila({ c, litros, guardando, onGuardar }: { c: Cli; litros: (km: number
       </td>
       <td className="px-4 py-2">
         <button
-          onClick={() => onGuardar(c, { nombre: nombre.trim(), km })}
+          onClick={() => onGuardar(c, { nombre: nombre.trim(), km: km === "" ? null : Number(km) })}
           disabled={!sucio || guardando}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-blue-400 disabled:opacity-40"
         >

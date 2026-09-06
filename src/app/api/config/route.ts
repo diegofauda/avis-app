@@ -20,14 +20,14 @@ export async function POST(req: Request) {
   const mes = String(b.mes ?? "");
   if (/^\d{4}-\d{2}$/.test(mes)) {
     const eff = await getConfigMes(mes); // base para completar campos no enviados
-    const full: Record<string, number> = {
+    const full: Record<(typeof CONSTANTES)[number], number> = {
       precioGasoil: eff.precioGasoil, precioLeche: eff.precioLeche, litrosPorKm: eff.litrosPorKm,
       pozoMovilidad: eff.pozoMovilidad, precioTrabajo: eff.precioTrabajo, precioMovilidad: eff.precioMovilidad, precioTacto: eff.precioTacto,
     };
     for (const k of CONSTANTES) {
       if (b[k] != null && b[k] !== "") { const n = Number(b[k]); if (Number.isFinite(n)) full[k] = n; }
     }
-    await prisma.configMes.upsert({ where: { mes }, create: { mes, ...full }, update: full });
+    await prisma.configMes.upsert({ where: { mes }, create: { mes, ...full }, update: { ...full } });
   }
 
   return Response.json({ ok: true });
