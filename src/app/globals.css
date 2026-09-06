@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Paleta azul AVIS — el azul vivo de la línea/aro del logo (para botones y acentos). */
+@theme {
+  --color-blue-50:  #eef6fd;
+  --color-blue-100: #d3e9fa;
+  --color-blue-200: #a9d3f4;
+  --color-blue-300: #74b8ec;
+  --color-blue-400: #3f9ce2;
+  --color-blue-500: #3f96e6;
+  --color-blue-600: #2489e2;
+  --color-blue-700: #1b83e0;
+  --color-blue-800: #1567b3;
+  --color-blue-900: #114f8a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

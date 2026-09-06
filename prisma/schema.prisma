@@ -1,0 +1,84 @@
+// AVIS · Agenda de Trabajos — modelo calcado del Excel de Fernando (GENERAL + movilidad + distribución).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Veterinario {
+  id        Int     @id @default(autoincrement())
+  nombre    String
+  apellido  String?
+  abreviado String  @unique          // VETE en el Excel (F, C, J, AG, AN, PC, PB, T, JU)
+  activo    Boolean @default(true)
+  esAdmin   Boolean @default(false)  // solo Fernando: ve y edita todo
+  orden     Int     @default(0)
+}
+
+/// Tabla de movilidad de Fernando: cliente → km → gasoil (litros = km*2*0.25).
+model Cliente {
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique
+  km     Float?
+  activo Boolean @default(true)
+}
+
+/// Constantes del mes (editables) + próximo remito.
+model Config {
+  id             Int   @id @default(1)
+  proximoRemito  Int   @default(1)
+  precioGasoil   Float @default(2476)     // $ litro gasoil (LG)
+  precioLeche    Float @default(513.87)   // $ litro leche (LL)
+  litrosPorKm    Float @default(0.25)     // consumo; gasoil = km*2*litrosPorKm
+  gavetBase      Float @default(1720)
+  pozoMovilidad  Float @default(5500000)  // total a distribuir por movilidad/mes
+  precioTrabajo  Float @default(900)      // $ por unidad de gavet (para $ FACT EST)
+  precioMovilidad Float @default(900)     // $ por litro de movilidad
+  precioTacto    Float @default(1600)     // $ por tacto (400 x 4)
+}
+
+/// Histórico de constantes por mes. Al reproducir un mes pasado se usan SUS valores.
+/// Si un mes no tiene registro, se arrastra el del último mes anterior cargado.
+model ConfigMes {
+  mes             String   @id          // "2026-08"
+  precioGasoil    Float
+  precioLeche     Float
+  litrosPorKm     Float
+  pozoMovilidad   Float
+  precioTrabajo   Float
+  precioMovilidad Float
+  precioTacto     Float
+  actualizado     DateTime @default(now())
+}
+
+/// Mes cerrado: la sola presencia del registro = mes bloqueado para editar. Reabrir = borrar.
+model CierreMes {
+  mes       String   @id          // "2026-08" (mes calendario de la fecha del parte)
+  cerradoEn DateTime @default(now())
+}
+
+/// El parte diario (una fila de GENERAL). Puede ser un trabajo o un día libre.
+model Parte {
+  id          Int      @id @default(autoincrement())
+  remito      Int      @unique
+  fecha       DateTime
+  vete        String                    // abreviado del veterinario
+  libre       Int?                      // día libre: 1=medio, 2=entero (null si es trabajo)
+  cliente     String?
+  descripcion String?
+  gavet       Float?                    // valor del trabajo
+  gasoil      Float?                    // litros (de la tabla por cliente, editable)
+  tactos      Int?
+  horas       Float?                    // horas de trabajo (para estadística / cotización)
+  compartida  Boolean  @default(false)  // movilidad compartida → cuenta al 50% en la distribución
+  camioneta   String?                   // de quién es la movilidad (media mov / compartida)
+  comentario  String?
+  creadoEn    DateTime @default(now())
+
+  @@index([fecha])
+  @@index([vete])
+}
