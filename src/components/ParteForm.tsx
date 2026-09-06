@@ -86,7 +86,7 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
         <button onClick={() => elegirVet("")} className="text-sm font-medium text-blue-700">cambiar</button>
       </div>
       {soyAdmin && (
-        <Link href="/fernando" className="mb-3 block rounded-xl bg-neutral-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-neutral-800">Ver Consolidado</Link>
+        <Link href="/fernando" className="mb-3 hidden rounded-xl bg-neutral-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-neutral-800 md:block">Ver Consolidado</Link>
       )}
 
       <div className="mb-2.5 grid grid-cols-2 gap-2">

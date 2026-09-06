@@ -7,11 +7,11 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Carga de partes de trabajo — Estudio Veterinario AVIS",
     // Relativo, para que abra sobre el mismo origen desde el que se instaló
     // (localhost en la notebook, o la IP de la red en el celular).
+    id: "/",
     start_url: "/",
     scope: "/",
-    // "browser" abre como pestaña normal — imprescindible en HTTP/red local.
-    // En producción (HTTPS) se puede volver a "standalone" para ventana propia tipo app.
-    display: "browser",
+    // En producción (HTTPS) instala como app real, ventana propia.
+    display: "standalone",
     background_color: "#ffffff",
     theme_color: "#1b83e0",
     icons: [
