@@ -5,7 +5,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const vet = searchParams.get("vet");
   const mes = searchParams.get("mes");
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { anulado: false };
   if (vet) where.vete = vet;
   if (mes) { const { desde, hasta } = rangoMes(mes); where.fecha = { gte: desde, lt: hasta }; }
   const partes = await prisma.parte.findMany({ where, orderBy: [{ fecha: "desc" }, { remito: "desc" }] });
@@ -45,7 +45,9 @@ export async function POST(req: Request) {
         gasoil: esLibre ? null : gasoil,
         tactos: esLibre ? null : (num(b.tactos) != null ? Math.trunc(num(b.tactos)!) : null),
         horas: esLibre ? null : num(b.horas),
+        turno: esLibre ? null : (b.turno ? String(b.turno) : null),
         compartida: esLibre ? false : !!b.compartida,
+        doble: esLibre ? false : !!b.doble,
         camioneta: b.camioneta ? String(b.camioneta) : null,
         comentario: b.comentario ? String(b.comentario) : null,
       },

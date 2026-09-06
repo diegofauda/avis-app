@@ -7,13 +7,15 @@ export const dynamic = "force-dynamic";
 
 const ffmt = (d: Date) => `${d.getUTCDate()}.${d.getUTCMonth() + 1}.${String(d.getUTCFullYear()).slice(2)}`;
 
+// GASOIL es col 10, MOVILIDAD(lts leche) es col 12 (usados para pintar compartida/doble).
 const COLS = [
-  { h: "REMITO", w: 9 }, { h: "FECHA", w: 10 }, { h: "VETE", w: 7 }, { h: "LIBRE", w: 7 },
+  { h: "REMITO", w: 9 }, { h: "FECHA", w: 10 }, { h: "TURNO", w: 7 }, { h: "VETE", w: 7 }, { h: "LIBRE", w: 7 },
   { h: "CLIENTE", w: 26 }, { h: "DESCRIPCIÓN", w: 40 }, { h: "HORAS", w: 8 }, { h: "GAVET", w: 9 }, { h: "GASOIL", w: 9 },
   { h: "TACTOS", w: 9 }, { h: "MOVILIDAD (lts leche)", w: 18 }, { h: "COMENTARIO", w: 26 }, { h: "CAMIONETA", w: 18 },
 ];
+const COL_GASOIL = 10, COL_MOVLECHE = 12;
 
-type P = { remito: number; fecha: Date; vete: string; libre: number | null; cliente: string | null; descripcion: string | null; horas: number | null; gavet: number | null; gasoil: number | null; tactos: number | null; comentario: string | null; camioneta: string | null; compartida: boolean };
+type P = { remito: number; fecha: Date; turno: string | null; vete: string; libre: number | null; cliente: string | null; descripcion: string | null; horas: number | null; gavet: number | null; gasoil: number | null; tactos: number | null; comentario: string | null; camioneta: string | null; compartida: boolean; doble: boolean };
 
 function hoja(wb: ExcelJS.Workbook, nombre: string, partes: P[], movLeche: (g: number | null) => number | null) {
   const ws = wb.addWorksheet(nombre, { views: [{ state: "frozen", ySplit: 1 }] });
@@ -22,16 +24,14 @@ function hoja(wb: ExcelJS.Workbook, nombre: string, partes: P[], movLeche: (g: n
   head.font = { bold: true, color: { argb: "FFFFFFFF" } };
   head.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1D4ED8" } };
   head.height = 20;
-  // Aviso en el encabezado de GASOIL: las celdas en amarillo son movilidad compartida a revisar.
-  head.getCell(9).note = "Las celdas en amarillo son movilidad COMPARTIDA — revisar/ajustar a mano.";
+  head.getCell(COL_GASOIL).note = "Amarillo = movilidad COMPARTIDA · Verde = DOBLE movilidad — revisar/ajustar a mano.";
+  const amarillo: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFE08A" } };
+  const verde: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF9BE7A0" } };
   for (const p of partes) {
-    const row = ws.addRow([p.remito, ffmt(p.fecha), p.vete, p.libre ?? "", p.cliente ?? "", p.descripcion ?? "",
+    const row = ws.addRow([p.remito, ffmt(p.fecha), p.turno ?? "", p.vete, p.libre ?? "", p.cliente ?? "", p.descripcion ?? "",
       p.horas ?? "", p.gavet ?? "", p.gasoil ?? "", p.tactos ?? "", movLeche(p.gasoil) ?? "", p.comentario ?? "", p.camioneta ?? ""]);
-    if (p.compartida) {
-      const amarillo: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFE08A" } };
-      row.getCell(9).fill = amarillo;  // GASOIL (movilidad en litros)
-      row.getCell(11).fill = amarillo; // MOVILIDAD (lts leche)
-    }
+    const fill = p.doble ? verde : p.compartida ? amarillo : null;
+    if (fill) { row.getCell(COL_GASOIL).fill = fill; row.getCell(COL_MOVLECHE).fill = fill; }
   }
   return ws;
 }
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
   const rhasta = Number(searchParams.get("rhasta")) || 0;
   const usaRemito = rdesde > 0 && rhasta > 0;
 
-  const where = usaRemito ? { remito: { gte: rdesde, lte: rhasta } } : { fecha: { gte: desde, lt: hasta } };
+  const where = { anulado: false, ...(usaRemito ? { remito: { gte: rdesde, lte: rhasta } } : { fecha: { gte: desde, lt: hasta } }) };
   const partes = (await prisma.parte.findMany({ where, orderBy: [{ fecha: "asc" }, { remito: "asc" }] })) as P[];
   const vets = await prisma.veterinario.findMany({ where: { activo: true }, orderBy: { orden: "asc" } });
 

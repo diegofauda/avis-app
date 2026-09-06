@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Row = { id: number; remito: number; fecha: string; vete: string; libre: number | null; cliente: string | null; descripcion: string | null; horas: number | null; tactos: number | null; camioneta: string | null; compartida: boolean };
+type Row = { id: number; remito: number; fecha: string; turno: string | null; vete: string; libre: number | null; cliente: string | null; descripcion: string | null; camioneta: string | null; compartida: boolean; doble: boolean };
 type Vet = { abreviado: string; nombre: string };
 
 export default function DetallePartes({ partes, vets, puedeEditar, mes, initialVete = "", initialQ = "" }: { partes: Row[]; vets: Vet[]; puedeEditar: boolean; mes: string; initialVete?: string; initialQ?: string }) {
@@ -41,11 +41,11 @@ export default function DetallePartes({ partes, vets, puedeEditar, mes, initialV
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-white [&_th]:font-semibold">
-              <th className="px-3 py-3">Remito</th><th className="px-3 py-3">Fecha</th><th className="px-3 py-3">Vete</th><th className="px-3 py-3">Libre</th><th className="px-3 py-3">Cliente</th><th className="px-3 py-3 min-w-[280px]">Descripción</th><th className="px-3 py-3 text-right">Horas</th><th className="px-3 py-3 text-right">Tactos</th><th className="px-3 py-3">Camioneta</th><th className="px-3 py-3 text-center">Mov.</th>
+              <th className="px-3 py-3">Remito</th><th className="px-3 py-3">Fecha</th><th className="px-3 py-3 text-center">Turno</th><th className="px-3 py-3">Vete</th><th className="px-3 py-3">Libre</th><th className="px-3 py-3">Cliente</th><th className="px-3 py-3 min-w-[280px]">Descripción</th><th className="px-3 py-3">Camioneta</th><th className="px-3 py-3 text-center">Mov.</th>
             </tr>
           </thead>
           <tbody>
-            {filtrados.length === 0 && <tr><td colSpan={10} className="px-4 py-8 text-center text-slate-400">Sin registros.</td></tr>}
+            {filtrados.length === 0 && <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">Sin registros.</td></tr>}
             {filtrados.map((p) => (
               <tr
                 key={p.id}
@@ -54,14 +54,16 @@ export default function DetallePartes({ partes, vets, puedeEditar, mes, initialV
               >
                 <td className="px-3 py-2 tabular-nums text-slate-500">{p.remito}</td>
                 <td className="whitespace-nowrap px-3 py-2 text-slate-600">{p.fecha}</td>
+                <td className="px-3 py-2 text-center text-slate-600">{p.turno ?? ""}</td>
                 <td className="px-3 py-2 text-slate-700">{p.vete}</td>
                 <td className="px-3 py-2 text-center text-slate-600">{p.libre ?? ""}</td>
                 <td className="px-3 py-2 text-slate-700">{p.cliente ?? ""}</td>
                 <td className="px-3 py-2 text-slate-600">{p.descripcion ?? ""}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-600">{p.horas ?? ""}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-600">{p.tactos ?? ""}</td>
                 <td className="px-3 py-2 text-slate-500">{p.camioneta ?? ""}</td>
-                <td className="px-3 py-2 text-center">{p.compartida && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700" title="Movilidad compartida — revisar en el Excel">comp.</span>}</td>
+                <td className="px-3 py-2 text-center">
+                  {p.doble ? <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700" title="Doble movilidad — revisar en el Excel">doble</span>
+                    : p.compartida ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700" title="Movilidad compartida — revisar en el Excel">comp.</span> : ""}
+                </td>
               </tr>
             ))}
           </tbody>

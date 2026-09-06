@@ -53,12 +53,38 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       cliente: esLibre ? null : (b.cliente ? String(b.cliente).trim() : parte.cliente),
       descripcion: b.descripcion != null ? String(b.descripcion) : parte.descripcion,
       gasoil: esLibre ? null : gasoil,
-      tactos: esLibre ? null : (num(b.tactos) != null ? Math.trunc(num(b.tactos)!) : null),
-      horas: esLibre ? null : num(b.horas),
+      // horas/tactos NO se editan en la app (los carga Kunfi en el Excel) → se preservan.
+      tactos: esLibre ? null : parte.tactos,
+      horas: esLibre ? null : parte.horas,
+      turno: esLibre ? null : (b.turno != null ? (b.turno ? String(b.turno) : null) : parte.turno),
       compartida: esLibre ? false : !!b.compartida,
+      doble: esLibre ? false : !!b.doble,
       camioneta: b.camioneta != null ? (b.camioneta ? String(b.camioneta) : null) : parte.camioneta,
       comentario: b.comentario != null ? (b.comentario ? String(b.comentario) : null) : parte.comentario,
     },
   });
   return Response.json(upd);
+}
+
+// Borrado lógico (anular): mismas reglas que editar (mes en curso / admin, no cerrado).
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const parte = await prisma.parte.findUnique({ where: { id: Number(id) } });
+  if (!parte) return new Response("No encontrado", { status: 404 });
+
+  const mesParte = parte.fecha.toISOString().slice(0, 7);
+  if (await prisma.cierreMes.findUnique({ where: { mes: mesParte } })) {
+    return new Response("El mes está cerrado. Reabrilo para eliminar.", { status: 403 });
+  }
+
+  const b = await req.json().catch(() => ({}));
+  const actorVet = b.actor ? await prisma.veterinario.findUnique({ where: { abreviado: String(b.actor) } }) : null;
+  const esAdmin = b.from === "fernando" || !!actorVet?.esAdmin;
+  if (!esAdmin) {
+    if (b.actor !== parte.vete) return new Response("No autorizado para eliminar este parte", { status: 403 });
+    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden eliminar partes del mes en curso", { status: 403 });
+  }
+
+  await prisma.parte.update({ where: { id: Number(id) }, data: { anulado: true } });
+  return Response.json({ ok: true });
 }

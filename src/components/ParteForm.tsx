@@ -19,10 +19,10 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
   const [libre, setLibre] = useState("2");
   const [cliente, setCliente] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [tactos, setTactos] = useState("");
-  const [horas, setHoras] = useState("");
+  const [turno, setTurno] = useState<"AM" | "PM" | "">("");
   const [camioneta, setCamioneta] = useState("");
   const [compartida, setCompartida] = useState(false);
+  const [doble, setDoble] = useState(false);
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -41,17 +41,18 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (tipo === "trabajo" && !cliente) { setMsg("Elegí el cliente"); return; }
-    if (tipo === "trabajo" && !horas) { setMsg("Cargá las horas"); return; }
+    if (tipo === "trabajo" && !turno) { setMsg("Elegí AM o PM"); return; }
+    if (tipo === "trabajo" && !camioneta) { setMsg("Elegí la camioneta"); return; }
     setSaving(true); setMsg("");
     try {
       const body = tipo === "libre"
         ? { fecha, vete: vet, libre, comentario }
-        : { fecha, vete: vet, cliente, descripcion, tactos, horas, camioneta, compartida, comentario };
+        : { fecha, vete: vet, cliente, descripcion, turno, camioneta, compartida, doble, comentario };
       const r = await fetch("/api/partes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (r.ok) {
         const p = await r.json();
         setMsg(`✓ Guardado — Remito ${p.remito}`);
-        setCliente(""); setDescripcion(""); setTactos(""); setHoras(""); setCamioneta(""); setCompartida(false); setComentario("");
+        setCliente(""); setDescripcion(""); setTurno(""); setCamioneta(""); setCompartida(false); setDoble(false); setComentario("");
         await cargarMis(vet);
         setTimeout(() => setMsg(""), 3500);
       } else setMsg("Error al guardar");
@@ -123,28 +124,33 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
               <label className={label}>Descripción del trabajo</label>
               <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className={input} placeholder="Ej: IATF vaquillonas, CAT y TBC 20 terneros…" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={label}>Horas</label>
-                <input type="number" inputMode="decimal" step="0.5" min="0" value={horas} onChange={(e) => setHoras(e.target.value)} className={input} placeholder="" required />
-              </div>
-              <div>
-                <label className={label}>Tactos (opcional)</label>
-                <input type="number" inputMode="numeric" value={tactos} onChange={(e) => setTactos(e.target.value)} className={input} placeholder="" />
+            <div>
+              <label className={label}>Turno</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["AM", "PM"] as const).map((t) => (
+                  <button key={t} type="button" onClick={() => setTurno(t)}
+                    className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${turno === t ? "bg-blue-700 text-white" : "bg-white text-slate-600 border border-slate-200"}`}>{t}</button>
+                ))}
               </div>
             </div>
             <div>
-              <label className={label}>Camioneta (opcional)</label>
+              <label className={label}>Camioneta</label>
               <select value={camioneta} onChange={(e) => setCamioneta(e.target.value)} className={input}>
-                <option value="">—</option>
+                <option value="">— Elegí —</option>
                 <option value="Estudio AVIS">Estudio AVIS</option>
                 {lists.veterinarios.map((v) => <option key={v.abreviado} value={`${v.nombre} ${v.apellido ?? ""}`.trim()}>{v.nombre} {v.apellido}</option>)}
               </select>
             </div>
-            <label className="flex items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700">
-              <input type="checkbox" checked={compartida} onChange={(e) => setCompartida(e.target.checked)} className="h-5 w-5 accent-blue-700" />
-              Movilidad compartida
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700">
+                <input type="checkbox" checked={compartida} onChange={(e) => setCompartida(e.target.checked)} className="h-5 w-5 accent-blue-700" />
+                Mov. compartida
+              </label>
+              <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700">
+                <input type="checkbox" checked={doble} onChange={(e) => setDoble(e.target.checked)} className="h-5 w-5 accent-emerald-600" />
+                Doble movilidad
+              </label>
+            </div>
           </>
         )}
 

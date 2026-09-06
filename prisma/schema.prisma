@@ -73,9 +73,12 @@ model Parte {
   descripcion String?
   gavet       Float?                    // valor del trabajo
   gasoil      Float?                    // litros (de la tabla por cliente, editable)
-  tactos      Int?
-  horas       Float?                    // horas de trabajo (para estadística / cotización)
-  compartida  Boolean  @default(false)  // movilidad compartida → cuenta al 50% en la distribución
+  tactos      Int?                      // lo carga Kunfi en el Excel (no en la app)
+  horas       Float?                    // lo carga Kunfi en el Excel (no en la app)
+  turno       String?                   // "AM" / "PM" (control, y para cruzar trabajos compartidos)
+  compartida  Boolean  @default(false)  // movilidad compartida (se pinta amarillo en el Excel)
+  doble       Boolean  @default(false)  // doble movilidad (se pinta verde en el Excel)
+  anulado     Boolean  @default(false)  // borrado lógico (mes abierto)
   camioneta   String?                   // de quién es la movilidad (media mov / compartida)
   comentario  String?
   creadoEn    DateTime @default(now())

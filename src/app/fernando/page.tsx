@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { rangoMes, mesActual, getConfig, mesCerrado } from "@/lib/data";
+import { rangoMes, mesActual, mesCerrado } from "@/lib/data";
 import AvisLogo from "@/components/AvisLogo";
 import AdminOnly from "@/components/AdminOnly";
 import ConsolidadoControls from "@/components/ConsolidadoControls";
@@ -9,7 +9,6 @@ import DetallePartes from "@/components/DetallePartes";
 export const dynamic = "force-dynamic";
 
 const fmt = (d: Date) => `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
-const n0 = (n: number) => Math.round(n).toLocaleString("es-AR");
 
 export default async function Fernando({ searchParams }: { searchParams: Promise<{ mes?: string; vete?: string; q?: string }> }) {
   const sp = await searchParams;
@@ -18,23 +17,19 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
   const cerrado = await mesCerrado(mes);
   const puedeEditar = !cerrado;
   const { desde, hasta } = rangoMes(mes);
-  const cfg = await getConfig();
-  const partes = await prisma.parte.findMany({ where: { fecha: { gte: desde, lt: hasta } }, orderBy: [{ fecha: "asc" }, { remito: "asc" }] });
+  const partes = await prisma.parte.findMany({ where: { anulado: false, fecha: { gte: desde, lt: hasta } }, orderBy: [{ fecha: "asc" }, { remito: "asc" }] });
   const vets = await prisma.veterinario.findMany({ orderBy: { orden: "asc" } });
   const adminAbrevs = vets.filter((v) => v.esAdmin).map((v) => v.abreviado);
   const nombreVet = (ab: string) => { const v = vets.find((x) => x.abreviado === ab); return v ? `${v.nombre} ${v.apellido ?? ""}`.trim() : ab; };
-  const movLeche = (g: number | null) => (g == null ? 0 : (g * cfg.precioGasoil) / cfg.precioLeche);
 
   const totGasoil = partes.reduce((a, p) => a + (p.gasoil ?? 0), 0);
-  const totTactos = partes.reduce((a, p) => a + (p.tactos ?? 0), 0);
-  const totHoras = partes.reduce((a, p) => a + (p.horas ?? 0), 0);
+  const totLibre = partes.reduce((a, p) => a + (p.libre ?? 0), 0);
 
   const porVet = vets.map((v) => {
     const ps = partes.filter((p) => p.vete === v.abreviado);
     return { vet: v.abreviado, nombre: nombreVet(v.abreviado), n: ps.length,
-      libre: ps.reduce((a, p) => a + (p.libre ?? 0), 0), gavet: ps.reduce((a, p) => a + (p.gavet ?? 0), 0),
-      gasoil: ps.reduce((a, p) => a + (p.gasoil ?? 0), 0), tactos: ps.reduce((a, p) => a + (p.tactos ?? 0), 0),
-      horas: ps.reduce((a, p) => a + (p.horas ?? 0), 0) };
+      libre: ps.reduce((a, p) => a + (p.libre ?? 0), 0),
+      gasoil: ps.reduce((a, p) => a + (p.gasoil ?? 0), 0) };
   }).filter((x) => x.n > 0);
 
   // ── Controles del mes (avisos antes de descargar) ──────────────────────────
@@ -56,7 +51,6 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
   const vetsPocosDias = diasPorVet.filter((x) => x.dias > 0 && maxDias >= 6 && x.dias < maxDias * 0.5);
   const esTrabajo = (p: typeof partes[number]) => p.libre == null;
   const sinDescripcion = partes.filter((p) => esTrabajo(p) && !(p.descripcion && p.descripcion.trim()));
-  const sinHoras = partes.filter((p) => esTrabajo(p) && p.horas == null);
   const clientesSinKm = [...new Set(partes.filter((p) => esTrabajo(p) && p.gasoil == null && p.cliente && p.cliente.trim().toUpperCase() !== "AVIS").map((p) => p.cliente as string))];
 
   type Aviso = { titulo: string; detalle: string };
@@ -66,7 +60,6 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
   if (diasSinCarga.length) avisos.push({ titulo: `${diasSinCarga.length} día(s) hábiles sin ninguna carga`, detalle: diasSinCarga.slice(0, 12).join(" · ") + (diasSinCarga.length > 12 ? " …" : "") });
   if (clientesSinKm.length) avisos.push({ titulo: `${clientesSinKm.length} cliente(s) sin km → movilidad sin calcular`, detalle: clientesSinKm.slice(0, 10).join(", ") + (clientesSinKm.length > 10 ? " …" : "") + " — cargá los km en Movilidad" });
   if (sinDescripcion.length) avisos.push({ titulo: `${sinDescripcion.length} trabajo(s) sin descripción`, detalle: "Remitos: " + sinDescripcion.slice(0, 12).map((p) => p.remito).join(", ") + (sinDescripcion.length > 12 ? " …" : "") });
-  if (sinHoras.length && mes === mesActual()) avisos.push({ titulo: `${sinHoras.length} trabajo(s) sin horas`, detalle: "Remitos: " + sinHoras.slice(0, 12).map((p) => p.remito).join(", ") + (sinHoras.length > 12 ? " …" : "") });
 
   return (
     <main className="min-h-screen bg-slate-100">
@@ -91,11 +84,10 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
       <div className="mx-auto max-w-6xl px-6 py-6">
         <ConsolidadoControls mes={mes} cerrado={cerrado} />
 
-        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-5 grid grid-cols-3 gap-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Partes</div><div className="mt-1 text-2xl font-semibold text-slate-800">{partes.length}</div></div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Horas</div><div className="mt-1 text-2xl font-semibold text-slate-800">{totHoras ? totHoras.toLocaleString("es-AR") : 0}</div></div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Movilidad (lts)</div><div className="mt-1 text-2xl font-semibold text-slate-800">{totGasoil.toLocaleString("es-AR")}</div></div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Tactos</div><div className="mt-1 text-2xl font-semibold text-slate-800">{n0(totTactos)}</div></div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Días libres</div><div className="mt-1 text-2xl font-semibold text-slate-800">{totLibre}</div></div>
         </div>
 
         {partes.length > 0 && (
@@ -129,8 +121,6 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
                     <th className="rounded-l-lg px-3 py-1.5 font-semibold">Veterinario</th>
                     <th className="px-3 py-1.5 text-right font-semibold">Partes</th>
                     <th className="px-3 py-1.5 text-right font-semibold">Movilidad</th>
-                    <th className="px-3 py-1.5 text-right font-semibold">Horas</th>
-                    <th className="px-3 py-1.5 text-right font-semibold">Tactos</th>
                     <th className="rounded-r-lg px-3 py-1.5 text-right font-semibold">Días libres</th>
                   </tr>
                 </thead>
@@ -140,8 +130,6 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
                       <td className="px-3 py-1.5 text-slate-700">{g.nombre} <span className="text-slate-400">({g.vet})</span></td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.n}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.gasoil.toLocaleString("es-AR")} lts</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.horas || ""}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.tactos}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.libre}</td>
                     </tr>
                   ))}
@@ -152,7 +140,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
         )}
 
         <DetallePartes
-          partes={partes.map((p) => ({ id: p.id, remito: p.remito, fecha: fmt(p.fecha), vete: p.vete, libre: p.libre, cliente: p.cliente, descripcion: p.descripcion, horas: p.horas, tactos: p.tactos, camioneta: p.camioneta, compartida: p.compartida }))}
+          partes={partes.map((p) => ({ id: p.id, remito: p.remito, fecha: fmt(p.fecha), turno: p.turno, vete: p.vete, libre: p.libre, cliente: p.cliente, descripcion: p.descripcion, camioneta: p.camioneta, compartida: p.compartida, doble: p.doble }))}
           vets={vets.map((v) => ({ abreviado: v.abreviado, nombre: nombreVet(v.abreviado) }))}
           puedeEditar={puedeEditar}
           mes={mes}
