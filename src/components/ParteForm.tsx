@@ -8,8 +8,9 @@ type Vet = { abreviado: string; nombre: string; apellido: string | null; esAdmin
 type Cli = { id: number; nombre: string };
 type Parte = { id: number; remito: number; fecha: string; cliente: string | null; descripcion: string | null; libre: number | null };
 
-const hoyISO = () => new Date().toISOString().slice(0, 10);
-const mesDeHoy = () => new Date().toISOString().slice(0, 7);
+const p2 = (n: number) => String(n).padStart(2, "0");
+const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
+const mesDeHoy = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`; };
 const fCorta = (iso: string) => { const d = new Date(iso); return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`; };
 
 export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[] } }) {
@@ -156,7 +157,7 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
 
         <div>
           <label className={label}>Comentario</label>
-          <textarea value={comentario} onChange={(e) => setComentario(e.target.value)} rows={2} className={input} placeholder="Ej: compartí movilidad con Carlos, ya cobrado…" />
+          <textarea value={comentario} onChange={(e) => setComentario(e.target.value)} rows={2} className={input} placeholder={tipo === "libre" ? "Motivo (ej: lluvia, feriado, personal…)" : "Ej: compartí movilidad con Carlos, ya cobrado…"} />
         </div>
 
         <button type="submit" disabled={saving} className="mt-1 rounded-xl bg-blue-700 px-4 py-3 text-base font-semibold text-white shadow-sm transition active:bg-blue-800 disabled:opacity-60">

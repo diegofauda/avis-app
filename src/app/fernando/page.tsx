@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { rangoMes, mesActual, mesCerrado } from "@/lib/data";
+import { rangoMes, mesActual, mesCerrado, hoyISOArg } from "@/lib/data";
 import AvisLogo from "@/components/AvisLogo";
 import AdminOnly from "@/components/AdminOnly";
 import ConsolidadoControls from "@/components/ConsolidadoControls";
@@ -36,8 +36,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
   const ymd = (d: Date) => d.toISOString().slice(0, 10);
   const [aa, mm] = mes.split("-").map(Number);
   const ultimoDia = new Date(Date.UTC(aa, mm, 0)).getUTCDate();
-  const hoy = new Date();
-  const diaTope = mes === mesActual() ? hoy.getUTCDate() : ultimoDia;
+  const diaTope = mes === mesActual() ? Number(hoyISOArg().slice(8, 10)) : ultimoDia;
   const fechasConParte = new Set(partes.map((p) => ymd(p.fecha)));
   const diasSinCarga: string[] = [];
   for (let d = 1; d <= diaTope; d++) {

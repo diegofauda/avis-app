@@ -43,7 +43,12 @@ export function rangoMes(mes: string) {
   return { desde: new Date(Date.UTC(y, m - 1, 1)), hasta: new Date(Date.UTC(y, m, 1)) };
 }
 
+// Fecha de hoy en zona horaria de Argentina ("YYYY-MM-DD"). El server corre en UTC,
+// así que sin esto a la noche AR "hoy" salta al día siguiente.
+export function hoyISOArg() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+}
+
 export function mesActual() {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  return hoyISOArg().slice(0, 7);
 }

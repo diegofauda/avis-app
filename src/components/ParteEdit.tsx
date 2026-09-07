@@ -102,7 +102,7 @@ export default function ParteEdit({ parte, lists, volverHref, actor, from }: { p
           </div>
         </>
       )}
-      <div><label className={label}>Comentario</label><textarea value={comentario} onChange={(e) => setComentario(e.target.value)} rows={2} className={input} /></div>
+      <div><label className={label}>Comentario</label><textarea value={comentario} onChange={(e) => setComentario(e.target.value)} rows={2} className={input} placeholder={tipo === "libre" ? "Motivo (ej: lluvia, feriado, personal…)" : "Ej: compartí movilidad con Carlos, ya cobrado…"} /></div>
 
       <div className="mt-1 flex gap-2">
         <button type="submit" disabled={saving || borrando} className="flex-1 rounded-xl bg-blue-700 px-4 py-3 text-base font-semibold text-white active:bg-blue-800 disabled:opacity-60">{saving ? "Guardando…" : "Guardar cambios"}</button>
