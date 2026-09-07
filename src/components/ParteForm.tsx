@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import ClientePicker from "./ClientePicker";
 import Buscador from "./Buscador";
+import MisPartes from "./MisPartes";
 
 type Vet = { abreviado: string; nombre: string; apellido: string | null; esAdmin?: boolean };
 type Cli = { id: number; nombre: string };
@@ -12,10 +13,8 @@ type Parte = { id: number; remito: number; fecha: string; cliente: string | null
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
-const mesDeHoy = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`; };
-const fCorta = (iso: string) => { const d = new Date(iso); return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`; };
 
-export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[]; trabajos: Trab[] } }) {
+export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[]; trabajos: Trab[]; cierres: string[] } }) {
   const [vet, setVet] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
   const [tipo, setTipo] = useState<"trabajo" | "libre">("trabajo");
@@ -34,7 +33,7 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
   useEffect(() => { try { const v = localStorage.getItem("avis_vet"); if (v) setVet(v); } catch {} }, []);
 
   const cargarMis = useCallback(async (v: string) => {
-    try { const r = await fetch(`/api/partes?vet=${encodeURIComponent(v)}&mes=${mesDeHoy()}`); if (r.ok) setMis(await r.json()); } catch {}
+    try { const r = await fetch(`/api/partes?vet=${encodeURIComponent(v)}`); if (r.ok) setMis(await r.json()); } catch {}
   }, []);
   useEffect(() => { if (vet) cargarMis(vet); }, [vet, cargarMis]);
 
@@ -183,19 +182,8 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
       </form>
 
       <div className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Mis partes de este mes ({mis.length})</h2>
-        <div className="grid gap-2">
-          {mis.length === 0 && <p className="text-sm text-slate-400">Todavía no cargaste partes este mes.</p>}
-          {mis.map((p) => (
-            <Link key={p.id} href={`/parte/${p.id}?actor=${vet}`} className="block rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-blue-300 active:bg-blue-50">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-800">{p.libre ? (p.libre === 1 ? "Medio día libre" : "Día libre") : p.cliente}</span>
-                <span className="text-xs text-slate-400">#{p.remito} · {fCorta(p.fecha)} · editar ›</span>
-              </div>
-              {p.descripcion && <div className="mt-0.5 text-sm text-slate-500">{p.descripcion}</div>}
-            </Link>
-          ))}
-        </div>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Mis partes ({mis.length})</h2>
+        <MisPartes partes={mis} vet={vet} cierres={lists.cierres} />
       </div>
     </div>
   );

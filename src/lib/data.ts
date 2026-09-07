@@ -1,13 +1,14 @@
 import { prisma } from "./prisma";
 
 export async function getListas() {
-  const [veterinarios, clientes, trabajos, config] = await Promise.all([
+  const [veterinarios, clientes, trabajos, cierresRaw, config] = await Promise.all([
     prisma.veterinario.findMany({ where: { activo: true }, orderBy: { orden: "asc" } }),
     prisma.cliente.findMany({ where: { activo: true }, orderBy: { nombre: "asc" } }),
     prisma.tipoTrabajo.findMany({ where: { activo: true }, orderBy: { nombre: "asc" } }),
+    prisma.cierreMes.findMany({ select: { mes: true } }),
     getConfig(),
   ]);
-  return { veterinarios, clientes, trabajos, config };
+  return { veterinarios, clientes, trabajos, cierres: cierresRaw.map((c) => c.mes), config };
 }
 
 export async function getConfig() {
