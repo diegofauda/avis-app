@@ -44,10 +44,11 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
     if (tipo === "trabajo" && !cliente) { setMsg("Elegí el cliente"); return; }
     if (tipo === "trabajo" && !turno) { setMsg("Elegí AM o PM"); return; }
     if (tipo === "trabajo" && !camioneta) { setMsg("Elegí la camioneta"); return; }
+    if (tipo === "libre" && libre === "1" && !turno) { setMsg("Elegí mañana o tarde"); return; }
     setSaving(true); setMsg("");
     try {
       const body = tipo === "libre"
-        ? { fecha, vete: vet, libre, comentario }
+        ? { fecha, vete: vet, libre, turno: libre === "1" ? turno : "", comentario }
         : { fecha, vete: vet, cliente, descripcion, turno, camioneta, compartida, doble, comentario };
       const r = await fetch("/api/partes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (r.ok) {
@@ -105,13 +106,26 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
         </div>
 
         {tipo === "libre" ? (
-          <div>
-            <label className={label}>Día libre</label>
-            <select value={libre} onChange={(e) => setLibre(e.target.value)} className={input}>
-              <option value="1">Medio día (1)</option>
-              <option value="2">Día completo (2)</option>
-            </select>
-          </div>
+          <>
+            <div>
+              <label className={label}>Día libre</label>
+              <select value={libre} onChange={(e) => setLibre(e.target.value)} className={input}>
+                <option value="1">Medio día (1)</option>
+                <option value="2">Día completo (2)</option>
+              </select>
+            </div>
+            {libre === "1" && (
+              <div>
+                <label className={label}>¿Mañana o tarde?</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["AM", "PM"] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => setTurno(t)}
+                      className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${turno === t ? "bg-blue-700 text-white" : "bg-white text-slate-600 border border-slate-200"}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div>

@@ -56,7 +56,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       // horas/tactos NO se editan en la app (los carga Kunfi en el Excel) → se preservan.
       tactos: esLibre ? null : parte.tactos,
       horas: esLibre ? null : parte.horas,
-      turno: esLibre ? null : (b.turno != null ? (b.turno ? String(b.turno) : null) : parte.turno),
+      turno: (esLibre && Math.trunc(Number(b.libre)) === 2) ? null : (b.turno != null ? (b.turno ? String(b.turno) : null) : parte.turno),
       compartida: esLibre ? false : !!b.compartida,
       doble: esLibre ? false : !!b.doble,
       camioneta: b.camioneta != null ? (b.camioneta ? String(b.camioneta) : null) : parte.camioneta,

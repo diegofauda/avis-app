@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         gasoil: esLibre ? null : gasoil,
         tactos: esLibre ? null : (num(b.tactos) != null ? Math.trunc(num(b.tactos)!) : null),
         horas: esLibre ? null : num(b.horas),
-        turno: esLibre ? null : (b.turno ? String(b.turno) : null),
+        turno: (esLibre && Math.trunc(Number(b.libre)) === 2) ? null : (b.turno ? String(b.turno) : null),
         compartida: esLibre ? false : !!b.compartida,
         doble: esLibre ? false : !!b.doble,
         camioneta: b.camioneta ? String(b.camioneta) : null,
