@@ -15,7 +15,7 @@ export default async function TrabajosPage() {
   return (
     <main className="min-h-screen bg-slate-100">
       <header className="bg-white border-b-2 border-blue-700 shadow-sm">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
             <AvisLogo size={42} />
             <div className="leading-tight">
