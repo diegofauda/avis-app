@@ -3,19 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ClientePicker from "./ClientePicker";
+import Buscador from "./Buscador";
 
 type Vet = { abreviado: string; nombre: string; apellido: string | null };
 type Cli = { id: number; nombre: string };
+type Trab = { id: number; nombre: string };
 type Parte = { id: number; remito: number; fecha: string; vete: string; libre: number | null; cliente: string | null; descripcion: string | null; turno: string | null; camioneta: string | null; compartida: boolean; doble: boolean; comentario: string | null };
 
-export default function ParteEdit({ parte, lists, volverHref, actor, from }: { parte: Parte; lists: { veterinarios: Vet[]; clientes: Cli[] }; volverHref: string; actor?: string; from?: string }) {
+export default function ParteEdit({ parte, lists, volverHref, actor, from }: { parte: Parte; lists: { veterinarios: Vet[]; clientes: Cli[]; trabajos: Trab[] }; volverHref: string; actor?: string; from?: string }) {
   const router = useRouter();
   const [tipo, setTipo] = useState<"trabajo" | "libre">(parte.libre != null ? "libre" : "trabajo");
   const [fecha, setFecha] = useState(parte.fecha.slice(0, 10));
   const [libre, setLibre] = useState(String(parte.libre ?? 2));
   const [cliente, setCliente] = useState(parte.cliente ?? "");
   const [descripcion, setDescripcion] = useState(parte.descripcion ?? "");
-  const [turno, setTurno] = useState<"AM" | "PM" | "">((parte.turno as "AM" | "PM") ?? "");
+  const [turno, setTurno] = useState<"AM" | "PM" | "TD" | "">((parte.turno as "AM" | "PM" | "TD") ?? "");
   const [camioneta, setCamioneta] = useState(parte.camioneta ?? "");
   const [compartida, setCompartida] = useState(!!parte.compartida);
   const [doble, setDoble] = useState(!!parte.doble);
@@ -88,10 +90,10 @@ export default function ParteEdit({ parte, lists, volverHref, actor, from }: { p
               <p className="mt-1 text-xs font-medium text-blue-700">Cliente nuevo — se agrega a la lista.</p>
             )}
           </div>
-          <div><label className={label}>Descripción del trabajo</label><textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className={input} /></div>
+          <div><label className={label}>Descripción del trabajo</label><Buscador items={lists.trabajos} value={descripcion} onChange={setDescripcion} placeholder="Buscá el trabajo o escribilo…" nuevoTexto={(v) => `Usar "${v}" (texto libre)`} /></div>
           <div><label className={label}>Turno</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["AM", "PM"] as const).map((t) => (
+            <div className="grid grid-cols-3 gap-2">
+              {(["AM", "PM", "TD"] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setTurno(t)} className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${turno === t ? "bg-blue-700 text-white" : "bg-white text-slate-600 border border-slate-200"}`}>{t}</button>
               ))}
             </div>

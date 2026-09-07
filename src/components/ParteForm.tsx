@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import ClientePicker from "./ClientePicker";
+import Buscador from "./Buscador";
 
 type Vet = { abreviado: string; nombre: string; apellido: string | null; esAdmin?: boolean };
 type Cli = { id: number; nombre: string };
+type Trab = { id: number; nombre: string };
 type Parte = { id: number; remito: number; fecha: string; cliente: string | null; descripcion: string | null; libre: number | null };
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -13,14 +15,14 @@ const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.g
 const mesDeHoy = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`; };
 const fCorta = (iso: string) => { const d = new Date(iso); return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`; };
 
-export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[] } }) {
+export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[]; trabajos: Trab[] } }) {
   const [vet, setVet] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
   const [tipo, setTipo] = useState<"trabajo" | "libre">("trabajo");
   const [libre, setLibre] = useState("2");
   const [cliente, setCliente] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [turno, setTurno] = useState<"AM" | "PM" | "">("");
+  const [turno, setTurno] = useState<"AM" | "PM" | "TD" | "">("");
   const [camioneta, setCamioneta] = useState("");
   const [compartida, setCompartida] = useState(false);
   const [doble, setDoble] = useState(false);
@@ -137,12 +139,12 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
             </div>
             <div>
               <label className={label}>Descripción del trabajo</label>
-              <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className={input} placeholder="Ej: IATF vaquillonas, CAT y TBC 20 terneros…" />
+              <Buscador items={lists.trabajos} value={descripcion} onChange={setDescripcion} placeholder="Buscá el trabajo o escribilo…" nuevoTexto={(v) => `Usar "${v}" (texto libre)`} />
             </div>
             <div>
               <label className={label}>Turno</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(["AM", "PM"] as const).map((t) => (
+              <div className="grid grid-cols-3 gap-2">
+                {(["AM", "PM", "TD"] as const).map((t) => (
                   <button key={t} type="button" onClick={() => setTurno(t)}
                     className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${turno === t ? "bg-blue-700 text-white" : "bg-white text-slate-600 border border-slate-200"}`}>{t}</button>
                 ))}

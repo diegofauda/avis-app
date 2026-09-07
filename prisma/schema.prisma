@@ -28,6 +28,14 @@ model Cliente {
   activo Boolean @default(true)
 }
 
+/// Lista de trabajos predefinidos (editable como la de movilidad). En la carga se busca;
+/// si no está, se escribe libre en Descripción.
+model TipoTrabajo {
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique
+  activo Boolean @default(true)
+}
+
 /// Constantes del mes (editables) + próximo remito.
 model Config {
   id             Int   @id @default(1)

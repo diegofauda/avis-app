@@ -73,6 +73,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
           </div>
           <nav className="flex gap-3 text-sm font-medium">
             <Link href="/movilidad" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Movilidad</Link>
+            <Link href="/trabajos" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Trabajos</Link>
             <Link href="/config" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Configuración</Link>
             <Link href="/" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">← Carga</Link>
           </nav>
