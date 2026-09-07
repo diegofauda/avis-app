@@ -45,7 +45,7 @@ export default function ParteEdit({ parte, lists, volverHref, actor, from }: { p
   }
 
   async function eliminar() {
-    if (!confirm(`¿Eliminar el parte #${parte.remito}? Se quita del consolidado y del Excel (mientras el mes esté abierto).`)) return;
+    if (!confirm(`¿Eliminar el evento #${parte.remito}? Se quita del consolidado y del Excel (mientras el mes esté abierto).`)) return;
     setBorrando(true); setMsg("");
     try {
       const r = await fetch(`/api/partes/${parte.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actor, from }) });
@@ -122,7 +122,7 @@ export default function ParteEdit({ parte, lists, volverHref, actor, from }: { p
         <button type="submit" disabled={saving || borrando} className="flex-1 rounded-xl bg-blue-700 px-4 py-3 text-base font-semibold text-white active:bg-blue-800 disabled:opacity-60">{saving ? "Guardando…" : "Guardar cambios"}</button>
         <button type="button" onClick={() => router.push(volverHref)} className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-medium text-slate-600">Cancelar</button>
       </div>
-      <button type="button" onClick={eliminar} disabled={saving || borrando} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60">{borrando ? "Eliminando…" : "Eliminar parte"}</button>
+      <button type="button" onClick={eliminar} disabled={saving || borrando} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60">{borrando ? "Eliminando…" : "Eliminar evento"}</button>
       {msg && <div className={`rounded-lg px-3 py-2 text-center text-sm font-medium ${msg.startsWith("✓") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{msg}</div>}
     </form>
   );

@@ -19,8 +19,8 @@ export default function ConsolidadoControls({ mes, cerrado }: { mes: string; cer
   async function toggleCierre() {
     const abrir = cerrado;
     const msg = abrir
-      ? "¿Reabrir este mes? Vas a poder volver a editar los partes."
-      : "¿Cerrar este mes? Nadie va a poder editar los partes (ni vos) hasta reabrirlo.";
+      ? "¿Reabrir este mes? Vas a poder volver a editar los eventos."
+      : "¿Cerrar este mes? Nadie va a poder editar los eventos (ni vos) hasta reabrirlo.";
     if (!confirm(msg)) return;
     setCerrando(true);
     try {
@@ -72,7 +72,7 @@ export default function ConsolidadoControls({ mes, cerrado }: { mes: string; cer
       </div>
       {cerrado && (
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-          🔒 Mes cerrado — los partes no se pueden editar hasta reabrirlo.
+          🔒 Mes cerrado — los eventos no se pueden editar hasta reabrirlo.
         </div>
       )}
       {busy && (

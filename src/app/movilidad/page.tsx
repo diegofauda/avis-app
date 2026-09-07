@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AdminNav from "@/components/AdminNav";
 import { prisma } from "@/lib/prisma";
 import { getConfig } from "@/lib/data";
 import AvisLogo from "@/components/AvisLogo";
@@ -26,17 +26,14 @@ export default async function MovilidadPage() {
               <div className="text-[10px] font-medium uppercase tracking-widest text-slate-500">Tabla de movilidad — Fernando</div>
             </div>
           </div>
-          <nav className="flex gap-3 text-sm font-medium">
-            <Link href="/config" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Configuración</Link>
-            <Link href="/fernando" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">← Consolidado</Link>
-          </nav>
+          <AdminNav />
         </div>
       </header>
 
       <AdminOnly admins={adminAbrevs}>
         <div className="mx-auto max-w-4xl px-6 py-6">
           <h1 className="text-2xl font-bold text-slate-800">Tabla de movilidad</h1>
-          <p className="mt-1 text-sm text-slate-500">Agregá clientes, corregí los kilómetros o dá de baja los que ya no atienden. Los km se usan para calcular el gasoil de cada parte.</p>
+          <p className="mt-1 text-sm text-slate-500">Agregá clientes, corregí los kilómetros o dá de baja los que ya no atienden. Los km se usan para calcular el gasoil de cada evento.</p>
           <MovilidadTable clientes={clientes} litrosPorKm={cfg.litrosPorKm} />
         </div>
       </AdminOnly>

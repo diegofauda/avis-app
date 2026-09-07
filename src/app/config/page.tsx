@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AdminNav from "@/components/AdminNav";
 import { prisma } from "@/lib/prisma";
 import { getConfig, getConfigMes, mesActual } from "@/lib/data";
 import ConfigForm from "@/components/ConfigForm";
@@ -27,10 +27,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
               <div className="text-[10px] font-medium uppercase tracking-widest text-slate-500">Configuración — Fernando</div>
             </div>
           </div>
-          <nav className="flex gap-3 text-sm font-medium">
-            <Link href="/movilidad" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Movilidad</Link>
-            <Link href="/fernando" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">← Consolidado</Link>
-          </nav>
+          <AdminNav />
         </div>
       </header>
       <AdminOnly admins={admins.map((a) => a.abreviado)}>

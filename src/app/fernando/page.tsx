@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { rangoMes, mesActual, mesCerrado, hoyISOArg } from "@/lib/data";
 import AvisLogo from "@/components/AvisLogo";
 import AdminOnly from "@/components/AdminOnly";
 import ConsolidadoControls from "@/components/ConsolidadoControls";
 import DetallePartes from "@/components/DetallePartes";
+import AdminNav from "@/components/AdminNav";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +54,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
 
   type Aviso = { titulo: string; detalle: string };
   const avisos: Aviso[] = [];
-  if (vetsSinCarga.length) avisos.push({ titulo: `${vetsSinCarga.length} veterinario(s) sin ningún parte`, detalle: vetsSinCarga.map((v) => v.nombre).join(", ") });
+  if (vetsSinCarga.length) avisos.push({ titulo: `${vetsSinCarga.length} veterinario(s) sin ningún evento`, detalle: vetsSinCarga.map((v) => v.nombre).join(", ") });
   if (vetsPocosDias.length) avisos.push({ titulo: `${vetsPocosDias.length} veterinario(s) con pocos días cargados`, detalle: vetsPocosDias.map((v) => `${v.nombre} (${v.dias} días)`).join(", ") });
   if (diasSinCarga.length) avisos.push({ titulo: `${diasSinCarga.length} día(s) hábiles sin ninguna carga`, detalle: diasSinCarga.slice(0, 12).join(" · ") + (diasSinCarga.length > 12 ? " …" : "") });
   if (clientesSinKm.length) avisos.push({ titulo: `${clientesSinKm.length} cliente(s) sin km → movilidad sin calcular`, detalle: clientesSinKm.slice(0, 10).join(", ") + (clientesSinKm.length > 10 ? " …" : "") + " — cargá los km en Movilidad" });
@@ -71,12 +71,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
               <div className="text-[10px] font-medium uppercase tracking-widest text-slate-500">Consolidado — Fernando</div>
             </div>
           </div>
-          <nav className="flex gap-3 text-sm font-medium">
-            <Link href="/movilidad" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Movilidad</Link>
-            <Link href="/trabajos" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Trabajos</Link>
-            <Link href="/config" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">Configuración</Link>
-            <Link href="/" className="rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">← Carga</Link>
-          </nav>
+          <AdminNav />
         </div>
       </header>
 
@@ -85,7 +80,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
         <ConsolidadoControls mes={mes} cerrado={cerrado} />
 
         <div className="mt-5 grid grid-cols-3 gap-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Partes</div><div className="mt-1 text-2xl font-semibold text-slate-800">{partes.length}</div></div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Eventos</div><div className="mt-1 text-2xl font-semibold text-slate-800">{partes.length}</div></div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Movilidad (lts)</div><div className="mt-1 text-2xl font-semibold text-slate-800">{totGasoil.toLocaleString("es-AR")}</div></div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Días libres</div><div className="mt-1 text-2xl font-semibold text-slate-800">{totLibre}</div></div>
         </div>
@@ -119,7 +114,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
                 <thead>
                   <tr className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-white [&_th]:font-semibold">
                     <th className="rounded-l-lg px-3 py-1.5 font-semibold">Veterinario</th>
-                    <th className="px-3 py-1.5 text-right font-semibold">Partes</th>
+                    <th className="px-3 py-1.5 text-right font-semibold">Eventos</th>
                     <th className="px-3 py-1.5 text-right font-semibold">Movilidad</th>
                     <th className="rounded-r-lg px-3 py-1.5 text-right font-semibold">Días libres</th>
                   </tr>

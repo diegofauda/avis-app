@@ -28,8 +28,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const actorVet = b.actor ? await prisma.veterinario.findUnique({ where: { abreviado: String(b.actor) } }) : null;
   const esAdmin = b.from === "fernando" || !!actorVet?.esAdmin;
   if (!esAdmin) {
-    if (b.actor !== parte.vete) return new Response("No autorizado para editar este parte", { status: 403 });
-    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden editar partes del mes en curso", { status: 403 });
+    if (b.actor !== parte.vete) return new Response("No autorizado para editar este evento", { status: 403 });
+    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden editar eventos del mes en curso", { status: 403 });
   }
 
   const nuevaFecha = b.fecha ? new Date(b.fecha) : parte.fecha;
@@ -81,8 +81,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const actorVet = b.actor ? await prisma.veterinario.findUnique({ where: { abreviado: String(b.actor) } }) : null;
   const esAdmin = b.from === "fernando" || !!actorVet?.esAdmin;
   if (!esAdmin) {
-    if (b.actor !== parte.vete) return new Response("No autorizado para eliminar este parte", { status: 403 });
-    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden eliminar partes del mes en curso", { status: 403 });
+    if (b.actor !== parte.vete) return new Response("No autorizado para eliminar este evento", { status: 403 });
+    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden eliminar eventos del mes en curso", { status: 403 });
   }
 
   await prisma.parte.update({ where: { id: Number(id) }, data: { anulado: true } });

@@ -28,7 +28,7 @@ export default async function EditarParte({ params, searchParams }: { params: Pr
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
             <AvisLogo size={44} />
-            <div className="text-base font-bold text-slate-900">Editar parte</div>
+            <div className="text-base font-bold text-slate-900">Editar evento</div>
           </div>
           <Link href={volver} className="text-sm font-medium rounded-md px-2.5 py-1.5 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700">← Volver</Link>
         </div>
@@ -36,13 +36,13 @@ export default async function EditarParte({ params, searchParams }: { params: Pr
 
       <div className="px-4 py-6">
         {!parte ? (
-          <p className="mx-auto max-w-md text-slate-500">Parte no encontrado.</p>
+          <p className="mx-auto max-w-md text-slate-500">Evento no encontrado.</p>
         ) : !propio ? (
-          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Solo podés editar tus propios partes. (Los demás los edita Fernando.)</p>
+          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Solo podés editar tus propios eventos. (Los demás los edita Fernando.)</p>
         ) : cerrado ? (
           <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">🔒 El mes está cerrado. Reabrilo desde el consolidado para poder editar.</p>
         ) : !editable ? (
-          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Este parte no es del mes en curso, así que no se puede editar.</p>
+          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Este evento no es del mes en curso, así que no se puede editar.</p>
         ) : (
           <div className="mx-auto max-w-md">
             <div className="text-sm text-slate-500">Remito <span className="font-semibold text-slate-800">#{parte.remito}</span> · {parte.vete}</div>

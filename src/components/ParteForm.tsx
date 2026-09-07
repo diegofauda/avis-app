@@ -182,7 +182,7 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
       </form>
 
       <div className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Mis partes ({mis.length})</h2>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Mis eventos ({mis.length})</h2>
         <MisPartes partes={mis} vet={vet} cierres={lists.cierres} />
       </div>
     </div>

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AVIS Agenda de Trabajos",
-  description: "Carga de partes de trabajo diarios — AVIS Estudio Veterinario.",
+  description: "Carga de eventos de trabajo diarios — AVIS Estudio Veterinario.",
   appleWebApp: { capable: true, title: "AVIS Agenda", statusBarStyle: "default" },
 };
 

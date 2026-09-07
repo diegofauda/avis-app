@@ -15,7 +15,7 @@ export default function AdminOnly({ admins, children }: { admins: string[]; chil
     return (
       <div className="mx-auto max-w-md px-6 py-16 text-center">
         <div className="text-lg font-semibold text-slate-800">Sección solo para Fernando</div>
-        <p className="mt-1 text-sm text-slate-500">El consolidado y la edición de todos los partes son de acceso exclusivo del administrador.</p>
+        <p className="mt-1 text-sm text-slate-500">El consolidado y la edición de todos los eventos son de acceso exclusivo del administrador.</p>
         <Link href="/" className="mt-4 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white">← Ir a la carga</Link>
       </div>
     );

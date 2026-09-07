@@ -20,7 +20,7 @@ export default function MisPartes({ partes, vet, cierres }: { partes: P[]; vet: 
   const [abiertos, setAbiertos] = useState<Set<string>>(() => new Set(["hoy", "ayer"]));
   const toggle = (k: string) => setAbiertos((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
-  if (partes.length === 0) return <p className="text-sm text-slate-400">Todavía no cargaste partes.</p>;
+  if (partes.length === 0) return <p className="text-sm text-slate-400">Todavía no cargaste eventos.</p>;
 
   return (
     <div className="grid gap-2">
