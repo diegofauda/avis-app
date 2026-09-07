@@ -37,8 +37,10 @@ function LoginForm() {
           <div className="text-sm text-slate-500">Ingresá la contraseña para continuar</div>
         </div>
       </div>
+      {/* Usuario fijo oculto: ayuda a que el navegador guarde/autocomplete la contraseña. */}
+      <input type="text" name="username" value="AVIS" autoComplete="username" readOnly hidden />
       <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Contraseña</label>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} autoFocus required />
+      <input type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} autoComplete="current-password" autoFocus required />
       <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
         <input type="checkbox" checked={recordar} onChange={(e) => setRecordar(e.target.checked)} className="h-4 w-4 accent-blue-700" />
         Recordar contraseña en este dispositivo
