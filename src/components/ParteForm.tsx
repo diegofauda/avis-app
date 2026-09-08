@@ -62,7 +62,8 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
         const p = await r.json();
         setMsg(`✓ Guardado — Remito ${p.remito}`);
         setCliente(""); setDescripcion(""); setTurno(""); setCamioneta(""); setCompartida(false); setDoble(false); setComentario("");
-        await cargarMis(vet, historico);
+        // Sin re-bajar la lista: agrego el evento nuevo arriba (aparece al instante en "Hoy").
+        setMis((prev) => [p, ...prev]);
         setTimeout(() => setMsg(""), 3500);
       } else setMsg("Error al guardar");
     } finally { setSaving(false); }
