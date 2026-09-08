@@ -10,7 +10,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [recordar, setRecordar] = useState(true);
   const [entrando, setEntrando] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState(sp.get("error") ? "Contraseña incorrecta" : "");
 
   async function entrar(e: React.FormEvent) {
     e.preventDefault();
@@ -29,7 +29,8 @@ function LoginForm() {
   const input = "w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
   return (
-    <form onSubmit={entrar} className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form onSubmit={entrar} action="/api/login" method="POST" className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <input type="hidden" name="next" value={sp.get("next") || "/"} />
       <div className="mb-5 flex flex-col items-center gap-2 text-center">
         <AvisLogo size={56} />
         <div>
@@ -42,7 +43,7 @@ function LoginForm() {
       <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Contraseña</label>
       <input type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} autoComplete="current-password" autoFocus required />
       <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-        <input type="checkbox" checked={recordar} onChange={(e) => setRecordar(e.target.checked)} className="h-4 w-4 accent-blue-700" />
+        <input type="checkbox" name="recordar" checked={recordar} onChange={(e) => setRecordar(e.target.checked)} className="h-4 w-4 accent-blue-700" />
         Recordar contraseña en este dispositivo
       </label>
       <button type="submit" disabled={entrando} className="mt-4 w-full rounded-xl bg-blue-700 px-4 py-3 text-base font-semibold text-white active:bg-blue-800 disabled:opacity-60">
