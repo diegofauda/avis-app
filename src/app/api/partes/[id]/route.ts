@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { rangoMes, mesActual } from "@/lib/data";
+import { rangoMes, mesActual, fechaCerrada } from "@/lib/data";
 
 const num = (v: unknown) => (v != null && v !== "" ? Number(v) : null);
 const esMesActual = (d: Date) => { const { desde, hasta } = rangoMes(mesActual()); return d >= desde && d < hasta; };
@@ -16,10 +16,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const parte = await prisma.parte.findUnique({ where: { id: Number(id) } });
   if (!parte) return new Response("No encontrado", { status: 404 });
 
-  // Mes cerrado: bloquea a todos (Fernando incluido) hasta reabrir.
-  const mesParte = parte.fecha.toISOString().slice(0, 7);
-  if (await prisma.cierreMes.findUnique({ where: { mes: mesParte } })) {
-    return new Response("El mes está cerrado. Reabrilo desde el consolidado para editar.", { status: 403 });
+  // Período cerrado: bloquea a todos (Fernando incluido) hasta reabrir.
+  if (await fechaCerrada(parte.fecha)) {
+    return new Response("El período está cerrado. Reabrilo desde el consolidado para editar.", { status: 403 });
   }
 
   const b = await req.json();
@@ -34,6 +33,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   const nuevaFecha = b.fecha ? new Date(b.fecha) : parte.fecha;
   if (!esAdmin && !esMesActual(nuevaFecha)) return new Response("La fecha debe quedar en el mes en curso", { status: 403 });
+  if (b.fecha && nuevaFecha.getTime() !== parte.fecha.getTime() && await fechaCerrada(nuevaFecha)) {
+    return new Response("La nueva fecha cae en un período cerrado.", { status: 403 });
+  }
 
   const esLibre = b.libre != null && b.libre !== "" && Number(b.libre) > 0;
   const cfg = (await prisma.config.findUnique({ where: { id: 1 } }))!;
@@ -72,9 +74,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const parte = await prisma.parte.findUnique({ where: { id: Number(id) } });
   if (!parte) return new Response("No encontrado", { status: 404 });
 
-  const mesParte = parte.fecha.toISOString().slice(0, 7);
-  if (await prisma.cierreMes.findUnique({ where: { mes: mesParte } })) {
-    return new Response("El mes está cerrado. Reabrilo para eliminar.", { status: 403 });
+  if (await fechaCerrada(parte.fecha)) {
+    return new Response("El período está cerrado. Reabrilo para eliminar.", { status: 403 });
   }
 
   const b = await req.json().catch(() => ({}));

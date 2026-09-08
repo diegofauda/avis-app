@@ -64,10 +64,23 @@ model ConfigMes {
   actualizado     DateTime @default(now())
 }
 
-/// Mes cerrado: la sola presencia del registro = mes bloqueado para editar. Reabrir = borrar.
+/// Mes cerrado (LEGACY): reemplazado por CierreRango. Se conserva para migrar los cierres viejos.
 model CierreMes {
   mes       String   @id          // "2026-08" (mes calendario de la fecha del parte)
   cerradoEn DateTime @default(now())
+}
+
+/// Período cerrado por rango de fechas: los partes con fecha en [desde, hasta) quedan bloqueados.
+/// `hasta` es EXCLUSIVO (día siguiente al último día incluido, a medianoche UTC). Los rangos se
+/// mantienen sin solaparse: cerrar fusiona con los que tocan; reabrir recorta/parte los existentes.
+model CierreRango {
+  id        Int      @id @default(autoincrement())
+  desde     DateTime                    // medianoche UTC del primer día incluido
+  hasta     DateTime                    // medianoche UTC del día siguiente al último (exclusivo)
+  cerradoEn DateTime @default(now())
+
+  @@index([desde])
+  @@index([hasta])
 }
 
 /// El parte diario (una fila de GENERAL). Puede ser un trabajo o un día libre.

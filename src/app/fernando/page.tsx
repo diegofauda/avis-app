@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { rangoMes, mesActual, mesCerrado, hoyISOArg } from "@/lib/data";
+import { mesActual, rangoCerrado, hoyISOArg } from "@/lib/data";
 import AvisLogo from "@/components/AvisLogo";
 import AdminOnly from "@/components/AdminOnly";
 import ConsolidadoControls from "@/components/ConsolidadoControls";
@@ -9,15 +9,37 @@ import AdminNav from "@/components/AdminNav";
 export const dynamic = "force-dynamic";
 
 const fmt = (d: Date) => `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+const isISO = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const dUTC = (iso: string) => new Date(iso + "T00:00:00.000Z");
+const masUnDia = (d: Date) => { const t = new Date(d); t.setUTCDate(t.getUTCDate() + 1); return t; };
 
-export default async function Fernando({ searchParams }: { searchParams: Promise<{ mes?: string; vete?: string; q?: string }> }) {
+export default async function Fernando({ searchParams }: { searchParams: Promise<{ desde?: string; hasta?: string; mes?: string; vete?: string; q?: string }> }) {
   const sp = await searchParams;
-  const mes = sp.mes || mesActual();
-  // Fernando (admin) edita cualquier mes, salvo que esté cerrado.
-  const cerrado = await mesCerrado(mes);
+
+  // Rango por defecto: del 1° del mes en curso hasta hoy (AR). Compat: ?mes=YYYY-MM abre ese mes entero.
+  const hoy = hoyISOArg();
+  let desde: string, hasta: string;
+  if (isISO(sp.desde) || isISO(sp.hasta)) {
+    desde = isISO(sp.desde) ? sp.desde! : `${(isISO(sp.hasta) ? sp.hasta! : hoy).slice(0, 7)}-01`;
+    hasta = isISO(sp.hasta) ? sp.hasta! : hoy;
+  } else if (sp.mes && /^\d{4}-\d{2}$/.test(sp.mes)) {
+    const [a, m] = sp.mes.split("-").map(Number);
+    desde = `${sp.mes}-01`;
+    hasta = new Date(Date.UTC(a, m, 0)).toISOString().slice(0, 10);
+  } else {
+    desde = `${hoy.slice(0, 7)}-01`;
+    hasta = hoy;
+  }
+  if (hasta < desde) hasta = desde;
+
+  const gte = dUTC(desde);
+  const ltExcl = masUnDia(dUTC(hasta));
+
+  // Cierre por rango de fechas: el período mostrado está cerrado si todo [desde, hasta] lo está.
+  const cerrado = await rangoCerrado(desde, hasta);
   const puedeEditar = !cerrado;
-  const { desde, hasta } = rangoMes(mes);
-  const partes = await prisma.parte.findMany({ where: { anulado: false, fecha: { gte: desde, lt: hasta } }, orderBy: [{ fecha: "asc" }, { remito: "asc" }] });
+
+  const partes = await prisma.parte.findMany({ where: { anulado: false, fecha: { gte, lt: ltExcl } }, orderBy: [{ fecha: "asc" }, { remito: "asc" }] });
   const vets = await prisma.veterinario.findMany({ orderBy: { orden: "asc" } });
   const adminAbrevs = vets.filter((v) => v.esAdmin).map((v) => v.abreviado);
   const nombreVet = (ab: string) => { const v = vets.find((x) => x.abreviado === ab); return v ? `${v.nombre} ${v.apellido ?? ""}`.trim() : ab; };
@@ -32,17 +54,16 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
       gasoil: ps.reduce((a, p) => a + (p.gasoil ?? 0), 0) };
   }).filter((x) => x.n > 0);
 
-  // ── Controles del mes (avisos antes de descargar) ──────────────────────────
+  // ── Controles del período (avisos antes de descargar) ──────────────────────
   const ymd = (d: Date) => d.toISOString().slice(0, 10);
-  const [aa, mm] = mes.split("-").map(Number);
-  const ultimoDia = new Date(Date.UTC(aa, mm, 0)).getUTCDate();
-  const diaTope = mes === mesActual() ? Number(hoyISOArg().slice(8, 10)) : ultimoDia;
   const fechasConParte = new Set(partes.map((p) => ymd(p.fecha)));
+  // Días hábiles del rango, sin pasar de hoy, sin ninguna carga.
+  const topeStr = hasta < hoy ? hasta : hoy;
+  const tope = dUTC(topeStr);
   const diasSinCarga: string[] = [];
-  for (let d = 1; d <= diaTope; d++) {
-    const dt = new Date(Date.UTC(aa, mm - 1, d));
+  for (let dt = new Date(gte); dt <= tope; dt = masUnDia(dt)) {
     if (dt.getUTCDay() === 0) continue; // domingo
-    if (!fechasConParte.has(ymd(dt))) diasSinCarga.push(`${String(d).padStart(2, "0")}/${String(mm).padStart(2, "0")}`);
+    if (!fechasConParte.has(ymd(dt))) diasSinCarga.push(`${String(dt.getUTCDate()).padStart(2, "0")}/${String(dt.getUTCMonth() + 1).padStart(2, "0")}`);
   }
   const diasPorVet = vets.map((v) => ({ vet: v.abreviado, nombre: nombreVet(v.abreviado), dias: new Set(partes.filter((p) => p.vete === v.abreviado).map((p) => ymd(p.fecha))).size }));
   const vetsSinCarga = diasPorVet.filter((x) => x.dias === 0 && x.vet !== "AVIS");
@@ -77,7 +98,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
 
       <AdminOnly admins={adminAbrevs}>
       <div className="mx-auto max-w-6xl px-6 py-6">
-        <ConsolidadoControls mes={mes} cerrado={cerrado} />
+        <ConsolidadoControls desde={desde} hasta={hasta} cerrado={cerrado} />
 
         <div className="mt-5 grid grid-cols-3 gap-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs uppercase tracking-wide text-slate-500">Eventos</div><div className="mt-1 text-2xl font-semibold text-slate-800">{partes.length}</div></div>
@@ -90,7 +111,7 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
             <div className="flex items-center gap-2">
               <span>{avisos.length ? "⚠️" : "✅"}</span>
               <h2 className={`text-sm font-semibold ${avisos.length ? "text-amber-900" : "text-emerald-900"}`}>
-                {avisos.length ? `Controles del mes — ${avisos.length} aviso(s) para revisar antes de descargar` : "Controles del mes — todo en orden, listo para descargar"}
+                {avisos.length ? `Controles del período — ${avisos.length} aviso(s) para revisar antes de descargar` : "Controles del período — todo en orden, listo para descargar"}
               </h2>
             </div>
             {avisos.length > 0 && (
@@ -106,39 +127,13 @@ export default async function Fernando({ searchParams }: { searchParams: Promise
           </div>
         )}
 
-        {porVet.length > 0 && (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-2 font-semibold text-slate-800">Resumen por veterinario</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-white [&_th]:font-semibold">
-                    <th className="rounded-l-lg px-3 py-1.5 font-semibold">Veterinario</th>
-                    <th className="px-3 py-1.5 text-right font-semibold">Eventos</th>
-                    <th className="px-3 py-1.5 text-right font-semibold">Movilidad</th>
-                    <th className="rounded-r-lg px-3 py-1.5 text-right font-semibold">Días libres</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {porVet.map((g) => (
-                    <tr key={g.vet} className="border-t border-slate-100">
-                      <td className="px-3 py-1.5 text-slate-700">{g.nombre} <span className="text-slate-400">({g.vet})</span></td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.n}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.gasoil.toLocaleString("es-AR")} lts</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{g.libre}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         <DetallePartes
-          partes={partes.map((p) => ({ id: p.id, remito: p.remito, fecha: fmt(p.fecha), turno: p.turno, vete: p.vete, libre: p.libre, cliente: p.cliente, descripcion: p.descripcion, camioneta: p.camioneta, compartida: p.compartida, doble: p.doble }))}
+          partes={partes.map((p) => ({ id: p.id, remito: p.remito, fecha: fmt(p.fecha), fechaISO: ymd(p.fecha), turno: p.turno, vete: p.vete, libre: p.libre, cliente: p.cliente, descripcion: p.descripcion, camioneta: p.camioneta, compartida: p.compartida, doble: p.doble }))}
           vets={vets.map((v) => ({ abreviado: v.abreviado, nombre: nombreVet(v.abreviado) }))}
+          resumen={porVet}
           puedeEditar={puedeEditar}
-          mes={mes}
+          desde={desde}
+          hasta={hasta}
           initialVete={sp.vete ?? ""}
           initialQ={sp.q ?? ""}
         />

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getListas, rangoMes, mesActual, mesCerrado } from "@/lib/data";
+import { getListas, rangoMes, mesActual, fechaCerrada } from "@/lib/data";
 import ParteEdit from "@/components/ParteEdit";
 import AvisLogo from "@/components/AvisLogo";
 
@@ -18,7 +18,7 @@ export default async function EditarParte({ params, searchParams }: { params: Pr
   // Fernando (admin) edita cualquier mes; un vet solo su propio parte del mes en curso.
   const esAdmin = sp.from === "fernando" || !!lists.veterinarios.find((v) => v.abreviado === sp.actor)?.esAdmin;
   const { desde, hasta } = rangoMes(mesActual());
-  const cerrado = parte ? await mesCerrado(parte.fecha.toISOString().slice(0, 7)) : false;
+  const cerrado = parte ? await fechaCerrada(parte.fecha) : false;
   const editable = cerrado ? false : (esAdmin ? true : (parte ? parte.fecha >= desde && parte.fecha < hasta : false));
   const propio = !!parte && (esAdmin || sp.actor === parte.vete);
 
@@ -40,7 +40,7 @@ export default async function EditarParte({ params, searchParams }: { params: Pr
         ) : !propio ? (
           <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Solo podés editar tus propios eventos. (Los demás los edita Fernando.)</p>
         ) : cerrado ? (
-          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">🔒 El mes está cerrado. Reabrilo desde el consolidado para poder editar.</p>
+          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">🔒 El período está cerrado. Reabrilo desde el consolidado para poder editar.</p>
         ) : !editable ? (
           <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Este evento no es del mes en curso, así que no se puede editar.</p>
         ) : (

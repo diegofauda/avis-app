@@ -58,8 +58,8 @@ export async function GET(req: Request) {
 
   // Constantes del mes correspondiente (histórico). Para rango por remito se deriva del
   // mes más frecuente entre los partes; si no, del mes pedido. Overridable por query.
-  const mesCfg = usaRemito
-    ? (() => { const c: Record<string, number> = {}; for (const p of partes) { const k = p.fecha.toISOString().slice(0, 7); c[k] = (c[k] || 0) + 1; } return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || mes; })()
+  const mesCfg = (usaRemito || usaRango)
+    ? (() => { const c: Record<string, number> = {}; for (const p of partes) { const k = p.fecha.toISOString().slice(0, 7); c[k] = (c[k] || 0) + 1; } return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || (from ? from.slice(0, 7) : mes); })()
     : mes;
   const cfg = await getConfigMes(mesCfg);
   const precioGasoil = Number(searchParams.get("precioGasoil")) || cfg.precioGasoil;

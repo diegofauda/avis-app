@@ -4,7 +4,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 type P = { id: number; remito: number; fecha: string; cliente: string | null; descripcion: string | null; libre: number | null };
-type Grupo = { key: string; label: string; orden: number; cerrado: boolean; editable: boolean; partes: P[] };
+type Rango = { desde: string; hasta: string }; // ISO "YYYY-MM-DD"; hasta EXCLUSIVO
+type Grupo = { key: string; label: string; orden: number; esMes: boolean; cerrado: boolean; editable: boolean; partes: P[] };
+
+// ¿La fecha ISO del parte cae en algún período cerrado? (hasta exclusivo)
+const estaCerrada = (iso: string, cierres: Rango[]) => cierres.some((c) => iso >= c.desde && iso < c.hasta);
 
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
@@ -14,7 +18,7 @@ const p2 = (n: number) => String(n).padStart(2, "0");
 function ymdParte(iso: string) { const d = new Date(iso); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), dow: d.getUTCDay() }; }
 function ymdHoy() { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; }
 
-export default function MisPartes({ partes, vet, cierres, historico, onVerHistorico }: { partes: P[]; vet: string; cierres: string[]; historico?: boolean; onVerHistorico?: () => void }) {
+export default function MisPartes({ partes, vet, cierres, historico, onVerHistorico }: { partes: P[]; vet: string; cierres: Rango[]; historico?: boolean; onVerHistorico?: () => void }) {
   const grupos = useMemo(() => buildGrupos(partes, cierres), [partes, cierres]);
   const [cargandoHist, setCargandoHist] = useState(false);
   // Por defecto abiertos: Hoy y Ayer (los dos primeros grupos de día).
@@ -76,7 +80,7 @@ export default function MisPartes({ partes, vet, cierres, historico, onVerHistor
   );
 }
 
-function buildGrupos(partes: P[], cierres: string[]): Grupo[] {
+function buildGrupos(partes: P[], cierres: Rango[]): Grupo[] {
   const hoy = ymdHoy();
   const hoyUTC = Date.UTC(hoy.y, hoy.m, hoy.d);
   const mesActualNum = hoy.y * 12 + hoy.m;
@@ -85,7 +89,7 @@ function buildGrupos(partes: P[], cierres: string[]): Grupo[] {
   for (const p of partes) {
     const t = ymdParte(p.fecha);
     const mesStr = `${t.y}-${p2(t.m + 1)}`;
-    const cerrado = cierres.includes(mesStr);
+    const cerrado = estaCerrada(p.fecha.slice(0, 10), cierres);
     const mesNum = t.y * 12 + t.m;
     const diff = Math.round((hoyUTC - Date.UTC(t.y, t.m, t.d)) / 86400000);
 
@@ -114,11 +118,13 @@ function buildGrupos(partes: P[], cierres: string[]): Grupo[] {
       orden = Date.UTC(t.y, 11, 31);
     }
 
-    const editable = mesNum === mesActualNum && !cerrado;
     let g = map.get(key);
-    if (!g) { g = { key, label, orden, cerrado, editable, partes: [] }; map.set(key, g); }
+    if (!g) { g = { key, label, orden, esMes: mesNum === mesActualNum, cerrado: false, editable: false, partes: [] }; map.set(key, g); }
+    if (cerrado) g.cerrado = true; // si algún parte del grupo está cerrado, se muestra bloqueado
     g.partes.push(p);
   }
 
+  // Editable = grupo del mes en curso y sin ningún parte en período cerrado.
+  for (const g of map.values()) g.editable = g.esMes && !g.cerrado;
   return [...map.values()].sort((a, b) => b.orden - a.orden);
 }

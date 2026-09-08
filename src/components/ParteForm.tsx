@@ -14,7 +14,9 @@ type Parte = { id: number; remito: number; fecha: string; cliente: string | null
 const p2 = (n: number) => String(n).padStart(2, "0");
 const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
 
-export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[]; trabajos: Trab[]; cierres: string[] } }) {
+type Rango = { desde: string; hasta: string };
+
+export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; clientes: Cli[]; trabajos: Trab[]; cierres: Rango[] } }) {
   const [vet, setVet] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
   const [tipo, setTipo] = useState<"trabajo" | "libre">("trabajo");

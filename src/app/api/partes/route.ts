@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { rangoMes } from "@/lib/data";
+import { rangoMes, fechaCerrada } from "@/lib/data";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
   if (!b.fecha || !b.vete) return new Response("Faltan fecha o veterinario", { status: 400 });
   const esLibre = b.libre != null && b.libre !== "" && Number(b.libre) > 0;
   if (!esLibre && !b.cliente) return new Response("Falta el cliente", { status: 400 });
+  if (await fechaCerrada(new Date(b.fecha))) return new Response("Esa fecha cae en un período cerrado.", { status: 403 });
 
   const parte = await prisma.$transaction(async (tx) => {
     const cfg = (await tx.config.findUnique({ where: { id: 1 } })) ?? (await tx.config.create({ data: { id: 1 } }));

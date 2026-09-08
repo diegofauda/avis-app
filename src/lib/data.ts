@@ -1,14 +1,35 @@
 import { prisma } from "./prisma";
 
+export type Rango = { desde: string; hasta: string }; // ISO "YYYY-MM-DD"; hasta EXCLUSIVO
+
 export async function getListas() {
-  const [veterinarios, clientes, trabajos, cierresRaw, config] = await Promise.all([
+  const [veterinarios, clientes, trabajos, cierres, config] = await Promise.all([
     prisma.veterinario.findMany({ where: { activo: true }, orderBy: { orden: "asc" } }),
     prisma.cliente.findMany({ where: { activo: true }, orderBy: { nombre: "asc" } }),
     prisma.tipoTrabajo.findMany({ where: { activo: true }, orderBy: { nombre: "asc" } }),
-    prisma.cierreMes.findMany({ select: { mes: true } }),
+    getCierres(),
     getConfig(),
   ]);
-  return { veterinarios, clientes, trabajos, cierres: cierresRaw.map((c) => c.mes), config };
+  return { veterinarios, clientes, trabajos, cierres, config };
+}
+
+// Rangos cerrados (para pintar/grisar en el cliente). hasta se devuelve EXCLUSIVO en ISO.
+export async function getCierres(): Promise<Rango[]> {
+  const rows = await prisma.cierreRango.findMany({ orderBy: { desde: "asc" } });
+  return rows.map((r) => ({ desde: r.desde.toISOString().slice(0, 10), hasta: r.hasta.toISOString().slice(0, 10) }));
+}
+
+// ¿La fecha (día calendario) cae dentro de algún período cerrado?
+export async function fechaCerrada(fecha: Date): Promise<boolean> {
+  return !!(await prisma.cierreRango.findFirst({ where: { desde: { lte: fecha }, hasta: { gt: fecha } } }));
+}
+
+// ¿El rango [desdeISO, hastaISO] (ambos inclusivos) está TODO cubierto por un cierre?
+// Se usa para el estado del botón Cerrar/Reabrir del consolidado.
+export async function rangoCerrado(desdeISO: string, hastaISO: string): Promise<boolean> {
+  const desde = new Date(desdeISO + "T00:00:00.000Z");
+  const hastaExcl = new Date(hastaISO + "T00:00:00.000Z"); hastaExcl.setUTCDate(hastaExcl.getUTCDate() + 1);
+  return !!(await prisma.cierreRango.findFirst({ where: { desde: { lte: desde }, hasta: { gte: hastaExcl } } }));
 }
 
 export async function getConfig() {
@@ -30,10 +51,6 @@ export async function getConfigMes(mes: string) {
     pozoMovilidad: g.pozoMovilidad, precioTrabajo: g.precioTrabajo, precioMovilidad: g.precioMovilidad,
     precioTacto: g.precioTacto, actualizado: null as Date | null, origen: "default" as const,
   };
-}
-
-export async function mesCerrado(mes: string) {
-  return !!(await prisma.cierreMes.findUnique({ where: { mes } }));
 }
 
 export function gasoilDeKm(km: number | null | undefined, litrosPorKm: number) {
