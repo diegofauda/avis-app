@@ -5,9 +5,11 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const vet = searchParams.get("vet");
   const mes = searchParams.get("mes");
+  const desdeParam = searchParams.get("desde"); // "YYYY-MM-DD": trae fecha >= desde (para carga liviana)
   const where: Record<string, unknown> = { anulado: false };
   if (vet) where.vete = vet;
   if (mes) { const { desde, hasta } = rangoMes(mes); where.fecha = { gte: desde, lt: hasta }; }
+  else if (desdeParam) where.fecha = { gte: new Date(desdeParam + "T00:00:00.000Z") };
   const partes = await prisma.parte.findMany({ where, orderBy: [{ fecha: "desc" }, { remito: "desc" }] });
   return Response.json(partes);
 }

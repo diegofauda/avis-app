@@ -29,13 +29,19 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [mis, setMis] = useState<Parte[]>([]);
+  const [historico, setHistorico] = useState(false);
 
   useEffect(() => { try { const v = localStorage.getItem("avis_vet"); if (v) setVet(v); } catch {} }, []);
 
-  const cargarMis = useCallback(async (v: string) => {
-    try { const r = await fetch(`/api/partes?vet=${encodeURIComponent(v)}`); if (r.ok) setMis(await r.json()); } catch {}
+  // Por defecto trae solo desde el 1° del mes anterior (liviano). Con full=true trae todo.
+  const cargarMis = useCallback(async (v: string, full = false) => {
+    let url = `/api/partes?vet=${encodeURIComponent(v)}`;
+    if (!full) { const d = new Date(); const desde = `${d.getFullYear()}-${p2(d.getMonth())}-01`; const mm = d.getMonth() === 0 ? `${d.getFullYear() - 1}-12-01` : desde; url += `&desde=${mm}`; }
+    try { const r = await fetch(url); if (r.ok) setMis(await r.json()); } catch {}
   }, []);
-  useEffect(() => { if (vet) cargarMis(vet); }, [vet, cargarMis]);
+
+  async function verHistorico() { setHistorico(true); if (vet) await cargarMis(vet, true); }
+  useEffect(() => { if (vet) { setHistorico(false); cargarMis(vet, false); } }, [vet, cargarMis]);
 
   const vetDisp = (ab: string) => { const v = lists.veterinarios.find((x) => x.abreviado === ab); return v ? `${v.nombre} ${v.apellido ?? ""}`.trim() : ab; };
   function elegirVet(v: string) { setVet(v); try { v ? localStorage.setItem("avis_vet", v) : localStorage.removeItem("avis_vet"); } catch {} }
@@ -56,7 +62,7 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
         const p = await r.json();
         setMsg(`✓ Guardado — Remito ${p.remito}`);
         setCliente(""); setDescripcion(""); setTurno(""); setCamioneta(""); setCompartida(false); setDoble(false); setComentario("");
-        await cargarMis(vet);
+        await cargarMis(vet, historico);
         setTimeout(() => setMsg(""), 3500);
       } else setMsg("Error al guardar");
     } finally { setSaving(false); }
@@ -183,7 +189,7 @@ export default function ParteForm({ lists }: { lists: { veterinarios: Vet[]; cli
 
       <div className="mt-6">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Mis eventos ({mis.length})</h2>
-        <MisPartes partes={mis} vet={vet} cierres={lists.cierres} />
+        <MisPartes partes={mis} vet={vet} cierres={lists.cierres} historico={historico} onVerHistorico={verHistorico} />
       </div>
     </div>
   );

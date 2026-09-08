@@ -14,16 +14,16 @@ const p2 = (n: number) => String(n).padStart(2, "0");
 function ymdParte(iso: string) { const d = new Date(iso); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), dow: d.getUTCDay() }; }
 function ymdHoy() { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; }
 
-export default function MisPartes({ partes, vet, cierres }: { partes: P[]; vet: string; cierres: string[] }) {
+export default function MisPartes({ partes, vet, cierres, historico, onVerHistorico }: { partes: P[]; vet: string; cierres: string[]; historico?: boolean; onVerHistorico?: () => void }) {
   const grupos = useMemo(() => buildGrupos(partes, cierres), [partes, cierres]);
+  const [cargandoHist, setCargandoHist] = useState(false);
   // Por defecto abiertos: Hoy y Ayer (los dos primeros grupos de día).
   const [abiertos, setAbiertos] = useState<Set<string>>(() => new Set(["hoy", "ayer"]));
   const toggle = (k: string) => setAbiertos((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
-  if (partes.length === 0) return <p className="text-sm text-slate-400">Todavía no cargaste eventos.</p>;
-
   return (
     <div className="grid gap-2">
+      {grupos.length === 0 && <p className="text-sm text-slate-400">{historico ? "Todavía no cargaste eventos." : "Sin eventos recientes."}</p>}
       {grupos.map((g) => {
         const open = abiertos.has(g.key);
         return (
@@ -62,6 +62,16 @@ export default function MisPartes({ partes, vet, cierres }: { partes: P[]; vet: 
           </div>
         );
       })}
+      {!historico && onVerHistorico && (
+        <button
+          type="button"
+          onClick={async () => { setCargandoHist(true); try { await onVerHistorico(); } finally { setCargandoHist(false); } }}
+          disabled={cargandoHist}
+          className="mt-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm hover:border-blue-400 hover:text-blue-700 disabled:opacity-60"
+        >
+          {cargandoHist ? "Cargando…" : "Ver histórico"}
+        </button>
+      )}
     </div>
   );
 }
@@ -92,10 +102,16 @@ function buildGrupos(partes: P[], cierres: string[]): Grupo[] {
       key = `sem-${lunes.toISOString().slice(0, 10)}`;
       label = `Semana del ${p2(lunes.getUTCDate())}/${p2(lunes.getUTCMonth() + 1)}`;
       orden = lunes.getTime();
-    } else {
+    } else if (mesActualNum - mesNum <= 12) {
+      // Últimos 12 meses → por mes.
       key = `mes-${mesStr}`;
       label = `${MESES[t.m]} ${t.y}`;
       orden = Date.UTC(t.y, t.m, 1);
+    } else {
+      // Más viejo → por año.
+      key = `anio-${t.y}`;
+      label = `${t.y}`;
+      orden = Date.UTC(t.y, 11, 31);
     }
 
     const editable = mesNum === mesActualNum && !cerrado;
