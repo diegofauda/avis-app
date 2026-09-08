@@ -17,7 +17,7 @@ export default async function TrabajosPage() {
       <header className="bg-white border-b-2 border-blue-700 shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <AvisLogo size={42} />
+            <AvisLogo size={48} />
             <div className="leading-tight">
               <div className="text-lg font-bold text-slate-900">AVIS · Agenda de Trabajos</div>
               <div className="text-[10px] font-medium uppercase tracking-widest text-slate-500">Lista de trabajos — Fernando</div>
