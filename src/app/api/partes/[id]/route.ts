@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { rangoMes, mesActual, fechaCerrada } from "@/lib/data";
+import { fechaCerrada } from "@/lib/data";
 
 const num = (v: unknown) => (v != null && v !== "" ? Number(v) : null);
-const esMesActual = (d: Date) => { const { desde, hasta } = rangoMes(mesActual()); return d >= desde && d < hasta; };
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,16 +22,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   const b = await req.json();
 
-  // Admin (Fernando) edita cualquier mes; un vet solo su propio parte del mes en curso.
+  // Admin (Fernando) edita cualquier evento; un vet solo los suyos. El candado es el cierre.
   const actorVet = b.actor ? await prisma.veterinario.findUnique({ where: { abreviado: String(b.actor) } }) : null;
   const esAdmin = b.from === "fernando" || !!actorVet?.esAdmin;
-  if (!esAdmin) {
-    if (b.actor !== parte.vete) return new Response("No autorizado para editar este evento", { status: 403 });
-    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden editar eventos del mes en curso", { status: 403 });
-  }
+  if (!esAdmin && b.actor !== parte.vete) return new Response("No autorizado para editar este evento", { status: 403 });
 
   const nuevaFecha = b.fecha ? new Date(b.fecha) : parte.fecha;
-  if (!esAdmin && !esMesActual(nuevaFecha)) return new Response("La fecha debe quedar en el mes en curso", { status: 403 });
   if (b.fecha && nuevaFecha.getTime() !== parte.fecha.getTime() && await fechaCerrada(nuevaFecha)) {
     return new Response("La nueva fecha cae en un período cerrado.", { status: 403 });
   }
@@ -68,7 +63,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   return Response.json(upd);
 }
 
-// Borrado lógico (anular): mismas reglas que editar (mes en curso / admin, no cerrado).
+// Borrado lógico (anular): mismas reglas que editar (dueño / admin, período no cerrado).
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const parte = await prisma.parte.findUnique({ where: { id: Number(id) } });
@@ -81,10 +76,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const b = await req.json().catch(() => ({}));
   const actorVet = b.actor ? await prisma.veterinario.findUnique({ where: { abreviado: String(b.actor) } }) : null;
   const esAdmin = b.from === "fernando" || !!actorVet?.esAdmin;
-  if (!esAdmin) {
-    if (b.actor !== parte.vete) return new Response("No autorizado para eliminar este evento", { status: 403 });
-    if (!esMesActual(parte.fecha)) return new Response("Solo se pueden eliminar eventos del mes en curso", { status: 403 });
-  }
+  if (!esAdmin && b.actor !== parte.vete) return new Response("No autorizado para eliminar este evento", { status: 403 });
 
   await prisma.parte.update({ where: { id: Number(id) }, data: { anulado: true } });
   return Response.json({ ok: true });

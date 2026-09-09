@@ -124,7 +124,7 @@ function buildGrupos(partes: P[], cierres: Rango[]): Grupo[] {
     g.partes.push(p);
   }
 
-  // Editable = grupo del mes en curso y sin ningún parte en período cerrado.
-  for (const g of map.values()) g.editable = g.esMes && !g.cerrado;
+  // Editable = grupo sin ningún parte en período cerrado (mes en curso o pasado abierto).
+  for (const g of map.values()) g.editable = !g.cerrado;
   return [...map.values()].sort((a, b) => b.orden - a.orden);
 }

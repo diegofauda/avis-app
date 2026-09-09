@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getListas, rangoMes, mesActual, fechaCerrada } from "@/lib/data";
+import { getListas, fechaCerrada } from "@/lib/data";
 import ParteEdit from "@/components/ParteEdit";
 import AvisLogo from "@/components/AvisLogo";
 
@@ -15,11 +15,10 @@ export default async function EditarParte({ params, searchParams }: { params: Pr
   const parte = await prisma.parte.findUnique({ where: { id: Number(id) } });
   const lists = await getListas();
 
-  // Fernando (admin) edita cualquier mes; un vet solo su propio parte del mes en curso.
+  // Se puede editar cualquier período que NO esté cerrado (el cierre es el candado).
+  // Fernando (admin) edita cualquier evento; un vet solo los suyos.
   const esAdmin = sp.from === "fernando" || !!lists.veterinarios.find((v) => v.abreviado === sp.actor)?.esAdmin;
-  const { desde, hasta } = rangoMes(mesActual());
   const cerrado = parte ? await fechaCerrada(parte.fecha) : false;
-  const editable = cerrado ? false : (esAdmin ? true : (parte ? parte.fecha >= desde && parte.fecha < hasta : false));
   const propio = !!parte && (esAdmin || sp.actor === parte.vete);
 
   return (
@@ -41,8 +40,6 @@ export default async function EditarParte({ params, searchParams }: { params: Pr
           <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Solo podés editar tus propios eventos. (Los demás los edita Fernando.)</p>
         ) : cerrado ? (
           <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">🔒 El período está cerrado. Reabrilo desde el consolidado para poder editar.</p>
-        ) : !editable ? (
-          <p className="mx-auto max-w-md rounded-xl bg-amber-50 p-4 text-sm text-amber-800">Este evento no es del mes en curso, así que no se puede editar.</p>
         ) : (
           <div className="mx-auto max-w-md">
             <div className="text-sm text-slate-500">Remito <span className="font-semibold text-slate-800">#{parte.remito}</span> · {parte.vete}</div>
